@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorresPet</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-content">
+            <h1 class="logo">Torres<span>Pet</span></h1>
+            <nav class="tab-switcher" id="tab-switcher">
+                <div class="tab-indicator" id="tab-indicator"></div>
+                <button class="tab-btn active" data-tab="0">Artigos</button>
+                <button class="tab-btn" data-tab="1">Pets</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="viewport-container">
+        <div class="tabs-wrapper" id="tabs-wrapper">
+            <!-- ABA ARTIGOS -->
+            <section id="tab-artigos" class="tab-content">
+                <div class="container">
+                    <div id="artigos-grid" class="grid-artigos">
+                        <div class="card-animal" onclick="abrirDetalhes('caes')">
+                            <div class="card-icon">🐶</div>
+                            <h3>Cães</h3>
+                        </div>
+                        <div class="card-animal" onclick="abrirDetalhes('gatos')">
+                            <div class="card-icon">🐱</div>
+                            <h3>Gatos</h3>
+                        </div>
+                        <div class="card-animal" onclick="abrirDetalhes('aves')">
+                            <div class="card-icon">🦜</div>
+                            <h3>Aves</h3>
+                        </div>
+                        <div class="card-animal" onclick="abrirDetalhes('peixes')">
+                            <div class="card-icon">🐠</div>
+                            <h3>Peixes</h3>
+                        </div>
+                    </div>
+
+                    <div id="artigo-detalhes" class="detalhes-container hidden">
+                        <button class="btn-voltar" onclick="voltarParaGrid()">← Voltar</button>
+                        <h2 id="detalhe-titulo"></h2>
+                        
+                        <div class="secoes-detalhes">
+                            <section class="info-box">
+                                <h4>🍴 Alimentação</h4>
+                                <p id="info-alimentacao"></p>
+                            </section>
+                            <section class="info-box">
+                                <h4>💉 Vacinação e Remédios</h4>
+                                <p id="info-vacinacao"></p>
+                            </section>
+                            <section class="info-box">
+                                <h4>🛁 Higiene</h4>
+                                <p id="info-higiene"></p>
+                            </section>
+                            <section class="info-box alerta">
+                                <h4>⚠️ Sinais de Alerta</h4>
+                                <p id="info-alerta"></p>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- FIM ABA ARTIGOS -->
+
+            <!-- ABA PETS -->
+            <section id="tab-pets" class="tab-content">
+                <div class="container">
+                    <div class="pets-header">
+                        <button class="btn-enviar" onclick="abrirModalEnvio()">Envie seu Pet</button>
+                    </div>
+                    <div id="pets-feed" class="grid-pets">
+                        <!-- Injetado via JS -->
+                    </div>
+                </div>
+            </section>
+            <!-- FIM ABA PETS -->
+        </div>
+    </main>
+
+    <!-- MODAL FORMULÁRIO -->
+    <div id="modal-envio" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalEnvio()">&times;</span>
+            <h2>Envie seu Pet</h2>
+            <form id="form-pet">
+                <div class="form-group">
+                    <label for="nomeDono">Seu Nome</label>
+                    <input type="text" id="nomeDono" required>
+                </div>
+                <div class="form-group">
+                    <label for="nomePet">Nome do Pet</label>
+                    <input type="text" id="nomePet" required>
+                </div>
+                <div class="form-group">
+                    <label for="local">Cidade/Bairro</label>
+                    <input type="text" id="local" required placeholder="Ex: Torres - Centro">
+                </div>
+                <div class="form-group">
+                    <label for="mensagem">Mensagem (Opcional)</label>
+                    <textarea id="mensagem" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="foto">Foto do Pet</label>
+                    <input type="file" id="foto" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn-submit">Enviar para Moderação</button>
+            </form>
+        </div>
+    </div>
+    <!-- FIM MODAL FORMULÁRIO -->
+
+
+    <!-- LIGHTBOX MODAL -->
+    <div id="lightbox" class="lightbox" onclick="fecharLightbox()">
+        <span class="close-lightbox">&times;</span>
+        <img id="lightbox-img" src="" alt="Ampliada">
+    </div>
+    <!-- FIM LIGHTBOX MODAL -->
+    <script src="script.js"></script>
+</body>
+</html>
