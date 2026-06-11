@@ -1,4 +1,6 @@
 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyEmzAYX9WYPG6KvbTXtV5mUnvbRQnrvJ2k-vI1KjcCvOcv_TPzzfan4Zygpfwnw-UaWg/exec";
+
 const DADOS_ARTIGOS = {
     caes: {
         titulo: "Cuidados com Cães",
@@ -83,25 +85,19 @@ function voltarParaGrid() {
 }
 
 async function buscarPetsDoServidor() {
-
-    const petsMock = [
-        {
-            nomeDono: "Guilherme",
-            nomePet: "Tarja",
-            local: "Centro, Torres",
-            mensagem: "A gata mais gata",
-            fotoUrl: "https://media.discordapp.net/attachments/705947684644716575/1512742531715174400/guiilhermehs-20260606-0001.jpg?ex=6a272d04&is=6a25db84&hm=da7013e324933b5dda2c165c1009128ecc590f03fd9cb8574a6d0de5010e63be&=&format=webp&width=1008&height=1008"
-        },
-        {
-            nomeDono: "Guilherme",
-            nomePet: "Rato",
-            local: "Centro, Torres",
-            mensagem: "Achei no quintal de casa",
-            fotoUrl: "https://media.discordapp.net/attachments/705947684644716575/1513363878418059484/IMG-20251021-WA0010.jpg?ex=6a277571&is=6a2623f1&hm=65fa7a25d70f0e74abfa322666ef9aa665f96a357b2c5a043aa962b5febb0eb0&=&format=webp"
+    try {
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) {
+            console.error('Erro ao buscar pets: Status', response.status);
+            alert('Não foi possível carregar o feed de pets. Tente novamente mais tarde.');
+            return;
         }
-    ];
-
-    renderizarPets(petsMock);
+        const pets = await response.json();
+        renderizarPets(pets);
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Não foi possível carregar o feed de pets. Tente novamente mais tarde.');
+    }
 }
 
 function renderizarPets(pets) {
@@ -111,14 +107,33 @@ function renderizarPets(pets) {
     pets.forEach(pet => {
         const card = document.createElement('div');
         card.className = 'pet-card';
-        card.innerHTML = `
-            <img src="${pet.fotoUrl}" alt="${pet.nomePet}" class="pet-img" onclick="abrirLightbox('${pet.fotoUrl}')">
-            <div class="pet-info">
-                <h4>${pet.nomePet} (${pet.nomeDono})</h4>
-                <p class="local">📍 ${pet.local}</p>
-                <p>${pet.mensagem}</p>
-            </div>
-        `;
+
+        const img = document.createElement('img');
+        img.src = pet.foto;
+        img.alt = pet.nome;
+        img.className = 'pet-img';
+        img.onclick = () => abrirLightbox(pet.foto);
+
+        const info = document.createElement('div');
+        info.className = 'pet-info';
+
+        const h4 = document.createElement('h4');
+        h4.textContent = pet.nome;
+
+        const pLocal = document.createElement('p');
+        pLocal.className = 'local';
+        pLocal.textContent = `📍 ${pet.cidade}`;
+
+        const pRelato = document.createElement('p');
+        pRelato.textContent = pet.relato;
+
+        info.appendChild(h4);
+        info.appendChild(pLocal);
+        info.appendChild(pRelato);
+
+        card.appendChild(img);
+        card.appendChild(info);
+
         feed.appendChild(card);
     });
 }
@@ -161,17 +176,51 @@ document.getElementById('form-pet').addEventListener('submit', async function(e)
 });
 
 async function enviarPetParaServidor(dadosPet) {
+    const btnEnvio = document.querySelector('#form-pet button[type="submit"]');
+    const textoOriginal = btnEnvio.innerText;
 
-    const reader = new FileReader();
-    reader.onload = function() {
+    try {
+        if (!dadosPet.fotoFile) {
+            alert("Por favor, selecione uma foto.");
+            return;
+        }
+
+        btnEnvio.disabled = true;
+        btnEnvio.innerText = "Enviando...";
+
+        const reader = new FileReader();
+        
+        const base64Promise = new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(dadosPet.fotoFile);
+        });
+
+        const fotoBase64 = await base64Promise;
+
+        const payload = {
+            nome: `${dadosPet.nomePet} (${dadosPet.nomeDono})`,
+            cidade: dadosPet.local,
+            relato: dadosPet.mensagem,
+            foto: fotoBase64
+        };
+
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
+        });
+
+        alert("Pet enviado com sucesso! Ele aparecerá no feed após a aprovação.");
         fecharModalEnvio();
         document.getElementById('form-pet').reset();
-    };
-    
-    if (dadosPet.fotoFile) {
-        reader.readAsDataURL(dadosPet.fotoFile);
-    } else {
-        alert("Por favor, selecione uma foto.");
+
+    } catch (error) {
+        console.error('Erro ao enviar:', error);
+        alert('Ocorreu um erro ao enviar os dados. Verifique sua conexão.');
+    } finally {
+        btnEnvio.disabled = false;
+        btnEnvio.innerText = textoOriginal;
     }
 }
 
