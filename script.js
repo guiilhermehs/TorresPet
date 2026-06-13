@@ -180,23 +180,41 @@ async function enviarPetParaServidor(dadosPet) {
     const textoOriginal = btnEnvio.innerText;
 
     try {
-        if (!dadosPet.fotoFile) {
+        const fotoFile = dadosPet.fotoFile;
+        if (!fotoFile) {
             alert("Por favor, selecione uma foto.");
             return;
         }
 
+        // 1. Validação de Tamanho Bruto
+        if (fotoFile.size > 10 * 1024 * 1024) {
+            alert("Esta imagem é muito pesada! Por favor, selecione uma foto com menos de 10MB.");
+            return;
+        }
+
         btnEnvio.disabled = true;
+        btnEnvio.innerText = "Processando Imagem...";
+
+        let blobParaProcessar = fotoFile;
+
+        // 2. Conversão de HEIC/HEIF se necessário
+        const fileName = fotoFile.name.toLowerCase();
+        if (fileName.endsWith(".heic") || fileName.endsWith(".heif")) {
+            try {
+                const convertedBlob = await heic2any({
+                    blob: fotoFile,
+                    toType: "image/jpeg",
+                    quality: 0.8
+                });
+                blobParaProcessar = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            } catch (e) {
+                console.error("Erro na conversão HEIC:", e);
+            }
+        }
+
+        const fotoBase64 = await otimizarImagem(blobParaProcessar);
+
         btnEnvio.innerText = "Enviando...";
-
-        const reader = new FileReader();
-        
-        const base64Promise = new Promise((resolve, reject) => {
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-            reader.readAsDataURL(dadosPet.fotoFile);
-        });
-
-        const fotoBase64 = await base64Promise;
 
         const payload = {
             nome: `${dadosPet.nomePet} (${dadosPet.nomeDono})`,
@@ -222,6 +240,46 @@ async function enviarPetParaServidor(dadosPet) {
         btnEnvio.disabled = false;
         btnEnvio.innerText = textoOriginal;
     }
+}
+
+function otimizarImagem(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                const MAX_WIDTH = 1200;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                // Pintar fundo de branco
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, width, height);
+
+                // Desenhar a imagem
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Exportar como JPEG 0.7
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                resolve(dataUrl);
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
 }
 
 function abrirLightbox(url) {
